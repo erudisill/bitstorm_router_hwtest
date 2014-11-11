@@ -12,9 +12,21 @@
 #include <util/setbaud.h>
 #include "clock.h"
 
+/*
+ * Simple data buffer. Not production ready!
+ */
 char buffer[1024];
 uint16_t buffer_i = 0;
 
+
+
+/*
+ * WAN USART0
+ *
+ * Initialize for TX at 38400 8N1.
+ * No flow control necessary.
+ * RX via ISR.
+ */
 void usart0_init()
 {
 	UBRR0H = UBRRH_VALUE;
@@ -35,9 +47,12 @@ void usart0_transmit(uint8_t data )
 	UDR0 = data;
 }
 
-
 ISR(USART0_RX_vect)
 {
+	// Receive data and stuff magic string + char into databuffer.
+	// NOTE: This will trash whatever is already in the databuffer.
+	//       It is for testing RX capability only.
+
 	char data = UDR0;
 	buffer_i = 0;
 	buffer[buffer_i++] = 'C';
@@ -50,7 +65,13 @@ ISR(USART0_RX_vect)
 
 
 
-
+/*
+ * BLE USART1
+ *
+ * Initialize for TX at 38400 8N1.
+ * HW Flow Control implemented on PD4 and PD5.
+ * RX via ISR.
+ */
 void usart1_init()
 {
 	UBRR1H = UBRRH_VALUE;
@@ -83,6 +104,9 @@ void usart1_flow()
 
 ISR(USART1_RX_vect)
 {
+	// Read the data, stuff it into the buffer, increment the index.
+	// NOTE: If overflow occurs, it just continuously overwrites the last char.
+	//       Do not use as reference code - for testing only.
 	char data = UDR1;
 	buffer[buffer_i++] = data;
 	if (buffer_i >= sizeof(buffer))
@@ -92,10 +116,12 @@ ISR(USART1_RX_vect)
 
 
 
-
+/*
+ * LEDs
+ */
 void leds_init()
 {
-	// LEDs
+	// LEDs - Set both to output and turn one on.
 	DDRD |= (1<<6) | (1<<7);
 	PORTD |= (1<<6);
 }
@@ -104,7 +130,12 @@ void leds_init()
 
 
 
-
+/*
+ *			MAIN MAIN MAIN MAIN MAIN
+ *			MAIN MAIN MAIN MAIN MAIN
+ *			MAIN MAIN MAIN MAIN MAIN
+ *
+ */
 int main()
 {
 	int i;
@@ -120,11 +151,17 @@ int main()
 
 	while (1)
 	{
+		// Toggle LEDs
 		PORTD ^= (1<<6) | (1<<7);
+
+		// Spit out regular data across the USARTs
 		usart0_transmit('0');
 		usart1_transmit('1');
+
+		// Exercise clock subsystem
 		delay_millis(1000);
 
+		// If databuffer has characters, dump to WAN USART and clear
 		i = 0;
 		while (buffer[i])
 		{

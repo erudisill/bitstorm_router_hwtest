@@ -1,10 +1,16 @@
-# bitstorm_router_hwtest
+bitstorm_router_hwtest
+======================
 
 Simple test application that exercises the varoius hardware capabilities of the BitStorm Router B.
 
-Currently, this includes usart0 (WAN), usart1 (BLE), and MCU LEDs 1 and 2.
+Currently, this includes:
+- usart0 (WAN)
+- usart1 (BLE)
+- MCU LEDs 1 and 2.
 
-Requires discovery-ble121lr script to be installed on the BLE chip.
+Requires *discovery-ble121lr* script to be installed on the BLE chip.
+
+LEDs 1 and 2 blink at 1Hz, alternating.
 
 MCU lowers BLE CTS then the BLE will begin sending AD messages on usart1.
 
