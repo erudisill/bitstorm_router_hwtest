@@ -127,7 +127,20 @@ void leds_init()
 }
 
 
+void dumpHex_0(uint8_t * data, int len)
+{
+	char hex[] = "0123456789ABCDEF";
+	uint8_t x;
 
+	for (int i=0;i<len;i++)
+	{
+		x = (uint8_t)hex[(data[i] >> 4)];
+		usart0_transmit(x);
+		x = (uint8_t)hex[(data[i] & 0x0f)];
+		usart0_transmit(x);
+		usart0_transmit(' ');
+	}
+}
 
 
 /*
@@ -139,13 +152,14 @@ void leds_init()
 int main()
 {
 	int i;
+	uint8_t data[] = { 0x01, 0x02, 0x03, 0xab, 0xcd, 0xef };
 
 	clock_init();
 
 	leds_init();
 	usart0_init();
-	usart1_init();
-	usart1_flow();
+	//usart1_init();
+	//usart1_flow();
 
 	sei();
 
@@ -155,8 +169,11 @@ int main()
 		PORTD ^= (1<<6) | (1<<7);
 
 		// Spit out regular data across the USARTs
-		usart0_transmit('0');
-		usart1_transmit('1');
+		//usart0_transmit('0');
+		dumpHex_0(data, sizeof(data));
+		usart0_transmit('\r');
+		usart0_transmit('\n');
+		//usart1_transmit('1');
 
 		// Exercise clock subsystem
 		delay_millis(1000);
